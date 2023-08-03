@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const Posts = require('../schemas/posts');
-const Comments = require('../schemas/comments');
+const { Posts } = require('../schemas/posts');
+const { Comments } = require('../schemas/comments');
 const authMiddleware = require('../middleware/auth-middleware');
 
 //조회

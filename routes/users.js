@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const router = express.Router();
 
-const User = require('../schemas/users');
+const { Users } = require('../schemas/users');
 
 //회원가입
 router.post('/signup', async (req, res) => {
@@ -23,11 +23,10 @@ router.post('/signup', async (req, res) => {
     if (password.includes(nickname))
       throw res.status(412).json({ errorMessage: '패스워드에 닉네임이 포함되어 있습니다.' });
 
-    const existsUsers = await User.findOne({ nickname });
+    const existsUsers = await Users.findOne({ where: nickname });
     if (existsUsers) throw res.status(412).json({ errorMessage: '중복된 닉네임입니다.' });
 
-    const user = new User({ nickname, password });
-    await user.save();
+    await Users.create({ nickname, password });
 
     res.status(201).json({ message: '회원 가입에 성공하였습니다.' });
   } catch {
@@ -39,7 +38,7 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { nickname, password } = req.body;
 
-  const user = await User.findOne({ nickname });
+  const user = await Users.findOne({ where: nickname });
 
   if (!user || password !== user.password) {
     throw res.status(400).json({
@@ -47,7 +46,7 @@ router.post('/login', async (req, res) => {
     });
   }
 
-  const token = jwt.sign({ userId: user.userId }, 'custom-secret-key');
+  const token = jwt.sign({ userId: user.userId }, 'secretkey');
 
   res.cookie('Authorization', `Bearer ${token}`);
   res.status(200).json({ token });
