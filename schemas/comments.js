@@ -7,11 +7,15 @@ const commentSchema = new mongoose.Schema({
   //     type: Number,
   //     unique: true,
   //   },
+  userId: {
+    type: String,
+    required: true,
+  },
   postId: {
     type: String,
     required: true,
   },
-  name: {
+  nickname: {
     type: String,
     required: true,
   },
@@ -19,7 +23,7 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  content: {
+  comment: {
     type: String,
     required: true,
   },

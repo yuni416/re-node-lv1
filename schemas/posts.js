@@ -7,10 +7,14 @@ const postsSchema = new mongoose.Schema({
   //   type: Number,
   //   unique: true,
   // },
+  userId: {
+    type: String,
+    required: true,
+  },
   title: {
     type: String,
   },
-  name: {
+  nickname: {
     type: String,
   },
   password: {
