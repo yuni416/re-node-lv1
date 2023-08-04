@@ -2,46 +2,40 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Posts', {
-      postId: {
+    await queryInterface.createTable('Likes', {
+      likeId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      UserId: {
-        allowNull: false,
+      userId: {
         type: Sequelize.INTEGER,
         references: {
           model: 'Users',
           key: 'userId',
         },
-        onDelete: 'CASCADE',
       },
-      nickname: {
+      postId: {
         type: Sequelize.INTEGER,
         references: {
-          model: 'Users',
-          key: 'nickname',
+          model: 'Posts',
+          key: 'postId',
         },
-      },
-      title: {
-        type: Sequelize.STRING,
-      },
-      content: {
-        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('now'),
       },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('now'),
       },
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Posts');
+    await queryInterface.dropTable('Likes');
   },
 };

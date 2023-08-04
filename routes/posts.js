@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Posts, Users } = require('../schemas/posts');
+const { Posts, Users, Likes } = require('../models');
 const authMiddleware = require('../middleware/auth-middleware');
 
 //전체 조회
@@ -11,8 +11,17 @@ router.get('/', async (req, res) => {
       attributes: ['postId', 'UserId', 'nickname', 'title', 'createdAt', 'updatedAt'],
       order: [['createdAt', 'DESC']],
     });
+    const search = posts.map((posts) => {
+      return {
+        postId: posts.postId,
+        userId: posts.userId,
+        nickname: posts.nickname,
+        likes: posts.likes,
+        createdAt: posts.createdAt,
+      };
+    });
 
-    res.status(200).json({ posts });
+    res.status(200).json({ search });
   } catch {
     res.status(400).json({ errorMessage: '게시글 조회에 실패하였습니다.' });
   }
@@ -37,7 +46,16 @@ router.get('/:postId', async (req, res) => {
   const { postId } = req.params;
   try {
     const posts = await Posts.findOne({
-      attributes: ['postId', 'UserId', 'nickname', 'title', 'content', 'createdAt', 'updatedAt'],
+      attributes: [
+        'postId',
+        'UserId',
+        'nickname',
+        'title',
+        'content',
+        'likes',
+        'createdAt',
+        'updatedAt',
+      ],
       where: { postId },
     });
 

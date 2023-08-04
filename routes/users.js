@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const express = require('express');
 const router = express.Router();
 
-const { Users } = require('../schemas/users');
+const { Users } = require('../models');
 
 //회원가입
 router.post('/signup', async (req, res) => {

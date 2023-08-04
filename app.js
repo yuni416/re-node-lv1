@@ -18,8 +18,11 @@ app.use('/posts', [postsRouter]);
 const commentsRouter = require('./routes/comments');
 app.use('/comments', [commentsRouter]);
 
-const usersRouter = require('./routes/users.js');
+const usersRouter = require('./routes/users');
 app.use('/api', [usersRouter]);
+
+const likesRouter = require('./routes/likes');
+app.use('/likes', [likesRouter]);
 
 app.listen(port, () => {
   console.log(`${port} 포트 서버`);

@@ -1,23 +1,26 @@
 const express = require('express');
 const router = express.Router();
 
-const { Posts } = require('../schemas/posts');
-const { Comments } = require('../schemas/comments');
+// const { Posts } = require('../models');
+const { Comments } = require('../models');
 const authMiddleware = require('../middleware/auth-middleware');
 
 //조회
 router.get('/:postId', async (req, res) => {
   const { postId } = req.params;
   try {
-    const comments = await Posts.find({ postId }).sort('-createdAt').exec();
-    const search = comments.map((comment) => {
+    const comments = await Comments.findAll({
+      where: { postId },
+      oreder: [['createdAt', 'DESC']],
+    });
+    const search = comments.map((comments) => {
       return {
-        commentId: comment.commentId,
-        userId: comment.userId,
-        nickname: comment.nickname,
-        comment: comment.comment,
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
+        postId: comments.postId,
+        userId: comments.userId,
+        commentId: comments.commentId,
+        nickname: comments.nickname,
+        comment: comments.comment,
+        createdAt: comments.createdAt,
       };
     });
     res.json({ comments: search });
@@ -29,7 +32,7 @@ router.get('/:postId', async (req, res) => {
 //작성
 router.post('/:postId', authMiddleware, async (req, res) => {
   const { postId } = req.params;
-  const { nickname } = res.locals.user;
+  const { userId, nickname } = res.locals.user;
   const { comment } = req.body;
   try {
     if (!postId) {
@@ -38,7 +41,7 @@ router.post('/:postId', authMiddleware, async (req, res) => {
     if (!comment) {
       throw res.status(412).json({ errorMessage: '댓글 내용을 입력해주세요' });
     }
-    await Comments.create({ postId, nickname, password, comment, createdAt });
+    await Comments.create({ postId, userId, nickname, comment });
 
     res.status(201).json({ message: '댓글을 작성했습니다.' });
   } catch {
@@ -51,7 +54,7 @@ router.put('/:postId/:commentId', authMiddleware, async (req, res) => {
   const { postId, commentId } = req.params;
   const { comment } = req.body;
   const { userId } = res.locals.user;
-  const comments = await Comments.findById(commentId);
+  const comments = await Comments.findOne({ where: { commentId } });
   try {
     try {
       if (!postId) {
@@ -60,13 +63,16 @@ router.put('/:postId/:commentId', authMiddleware, async (req, res) => {
       if (!commentId) {
         throw res.status(404).json({ errorMessage: '댓글이 존재하지 않습니다.' });
       }
+      if (!comment) {
+        throw res.status(404).json({ errorMessage: '댓글 내용을 입력해주세요.' });
+      }
       if (userId !== comments.userId) {
         throw res.status(403).json({ errorMessage: '댓글의 수정 권한이 존재하지 않습니다.' });
       }
     } catch {
       res.status(400).json({ errorMessage: '댓글 수정이 정상적으로 처리되지 않았습니다.' });
     }
-    await Comments.updateOne({ _id: commentId }, { $set: { comment: comment } });
+    await Comments.update({ comment }, { where: { commentId: commentId } });
   } catch {
     res.status(400).json({ errorMessage: '댓글 수정에 실패했습니다.' });
   }
@@ -76,9 +82,8 @@ router.put('/:postId/:commentId', authMiddleware, async (req, res) => {
 router.delete('/:postId/:commentId', authMiddleware, async (req, res) => {
   const { postId, commentId } = req.params;
   const { userId } = res.locals.user;
-  const comment = await Comments.findById(commentId);
+  const comment = await Comments.findOne({ where: { commentId } });
 
-  const comments = await Comments.findById(commentId);
   try {
     try {
       if (!postId) {
