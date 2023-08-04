@@ -1,108 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-// const { Posts } = require('../models');
-const { Comments } = require('../models');
-const authMiddleware = require('../middleware/auth-middleware');
+const authMiddleware = require('../middleware/auth-middleware.js');
 
-//조회
-router.get('/:postId', async (req, res) => {
-  const { postId } = req.params;
-  try {
-    const comments = await Comments.findAll({
-      where: { postId },
-      oreder: [['createdAt', 'DESC']],
-    });
-    const search = comments.map((comments) => {
-      return {
-        postId: comments.postId,
-        userId: comments.userId,
-        commentId: comments.commentId,
-        nickname: comments.nickname,
-        comment: comments.comment,
-        createdAt: comments.createdAt,
-      };
-    });
-    res.json({ comments: search });
-  } catch {
-    res.status(400).json({ errorMessage: '댓글 조회에 실패했습니다.' });
-  }
-});
+const CommentsController = require('../controller/commentscontroller');
+const commentsController = new CommentsController();
 
-//작성
-router.post('/:postId', authMiddleware, async (req, res) => {
-  const { postId } = req.params;
-  const { userId, nickname } = res.locals.user;
-  const { comment } = req.body;
-  try {
-    if (!postId) {
-      throw res.status(404).json({ errorMessage: '게시글이 존재하지 않습니다' });
-    }
-    if (!comment) {
-      throw res.status(412).json({ errorMessage: '댓글 내용을 입력해주세요' });
-    }
-    await Comments.create({ postId, userId, nickname, comment });
+router.post('/:postId', authMiddleware, commentsController.createComment);
 
-    res.status(201).json({ message: '댓글을 작성했습니다.' });
-  } catch {
-    res.status(400).json({ errorMessage: '댓글 작성에 실패했습니다.' });
-  }
-});
+router.get('/:postId', commentsController.getComments);
 
-//수정
-router.put('/:postId/:commentId', authMiddleware, async (req, res) => {
-  const { postId, commentId } = req.params;
-  const { comment } = req.body;
-  const { userId } = res.locals.user;
-  const comments = await Comments.findOne({ where: { commentId } });
-  try {
-    try {
-      if (!postId) {
-        throw res.status(404).json({ errorMessage: '게시글이 존재하지 않습니다.' });
-      }
-      if (!commentId) {
-        throw res.status(404).json({ errorMessage: '댓글이 존재하지 않습니다.' });
-      }
-      if (!comment) {
-        throw res.status(404).json({ errorMessage: '댓글 내용을 입력해주세요.' });
-      }
-      if (userId !== comments.userId) {
-        throw res.status(403).json({ errorMessage: '댓글의 수정 권한이 존재하지 않습니다.' });
-      }
-    } catch {
-      res.status(400).json({ errorMessage: '댓글 수정이 정상적으로 처리되지 않았습니다.' });
-    }
-    await Comments.update({ comment }, { where: { commentId: commentId } });
-  } catch {
-    res.status(400).json({ errorMessage: '댓글 수정에 실패했습니다.' });
-  }
-});
+router.put('/:postId:commentId', authMiddleware, commentsController.updateComment);
 
-//삭제
-router.delete('/:postId/:commentId', authMiddleware, async (req, res) => {
-  const { postId, commentId } = req.params;
-  const { userId } = res.locals.user;
-  const comment = await Comments.findOne({ where: { commentId } });
-
-  try {
-    try {
-      if (!postId) {
-        throw res.status(404).json({ errorMessage: '게시글이 존재하지 않습니다.' });
-      }
-      if (!commentId) {
-        throw res.status(404).json({ errorMessage: '댓글이 존재하지 않습니다.' });
-      }
-      if (userId !== comments.userId) {
-        throw res.status(403).json({ errorMessage: '댓글의 삭제 권한이 존재하지 않습니다.' });
-      }
-      await Comments.deleteOne({ _id: commentId }, { $set: { comment: comment } });
-      res.status(200).json({ message: '댓글을 삭제했습니다.' });
-    } catch {
-      res.status(400).json({ errorMessage: '댓글 삭제가 정상적으로 처리되지 않았습니다.' });
-    }
-  } catch {
-    res.status(400).json({ errorMessage: '댓글 삭제에 실패했습니다.' });
-  }
-});
+router.delete('/:postId/:commentId', authMiddleware, commentsController.deleteComment);
 
 module.exports = router;
